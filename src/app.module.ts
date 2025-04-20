@@ -2,8 +2,12 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { UserModule } from './user/user.module';
+import { SellerModule } from './seller/seller.module';
+import { CarModule } from './car/car.module';
+import { OrderModule } from './order/order.module';
 import * as dotenv from 'dotenv';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 dotenv.config();
 
@@ -12,16 +16,11 @@ dotenv.config();
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      autoLoadEntities: true,
-      synchronize: true,
-    }),
+    PrismaModule,
+    UserModule,
+    SellerModule,
+    CarModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
