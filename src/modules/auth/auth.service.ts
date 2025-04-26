@@ -12,8 +12,8 @@ export class AuthService {
     return bcrypt.hash(password, 10);
   }
 
-  async comparePassword(hashPassword: HashPassword): Promise<boolean> {
-    return bcrypt.compare(hashPassword.password, hashPassword.hash);
+  async comparePassword({ password, hash }: HashPassword): Promise<boolean> {
+    return bcrypt.compare(password, hash);
   }
 
   async generateJwtToken(data: GenerateJwtToken): Promise<string> {

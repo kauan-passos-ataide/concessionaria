@@ -16,7 +16,8 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   cpf       String
-  name      String
+  firstName String
+  lastName  String
   email     String   @unique
   password  String
   createdAt DateTime @default(now()) @db.Timestamp(0)
@@ -27,7 +28,9 @@ model User {
 model Seller {
   id        String   @id @default(uuid())
   cpf       String
-  name      String
+  cnpj      String?
+  firstName String
+  lastName  String
   email     String   @unique
   password  String
   createdAt DateTime @default(now()) @db.Timestamp(0)
@@ -40,6 +43,9 @@ model Car {
   id          String  @id @default(uuid())
   name        String
   price       Float
+  model       String
+  color       String
+  year        Int
   description String
   sellerId    String
   seller      Seller  @relation(fields: [sellerId], references: [id])
@@ -55,5 +61,5 @@ model Order {
   createdAt   DateTime @default(now()) @db.Timestamp(0)
   seller      Seller   @relation(fields: [sellerId], references: [id])
   user        User     @relation(fields: [purchaserId], references: [id])
-  car         Car     @relation(fields: [carId], references: [id])
+  car         Car      @relation(fields: [carId], references: [id])
 }

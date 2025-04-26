@@ -2,8 +2,11 @@ import { User } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
 export class UserEntity implements User {
+  @Exclude()
   id: string;
-  name: string;
+
+  firstName: string;
+  lastName: string;
   email: string;
   cpf: string;
   createdAt: Date;

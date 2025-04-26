@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import * as dotenv from 'dotenv';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './jwt.guard';
+import { PrismaService } from '../../prisma/prisma.service';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ dotenv.config();
   ],
   providers: [
     AuthService,
+    PrismaService,
     {
       provide: APP_GUARD,
       useClass: JwtGuard,

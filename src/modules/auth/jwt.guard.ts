@@ -36,7 +36,7 @@ export class JwtGuard implements CanActivate {
       const payload: JwtPayload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
-      if (payload.email && payload.sub) {
+      if (payload.email && payload.id) {
         return true;
       }
       return false;
