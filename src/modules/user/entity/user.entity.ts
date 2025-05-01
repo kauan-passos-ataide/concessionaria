@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { $Enums, User } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
 export class UserEntity implements User {
@@ -9,6 +9,17 @@ export class UserEntity implements User {
   lastName: string;
   email: string;
   cpf: string;
+  cnpj: string | null;
+  city: string;
+  complement: string | null;
+  country: string;
+  neighborhood: string;
+  numberAddress: string;
+  state: string;
+  street: string;
+  zipCode: string;
+  phone: string;
+  role: $Enums.Role;
   createdAt: Date;
   updateAt: Date;
 

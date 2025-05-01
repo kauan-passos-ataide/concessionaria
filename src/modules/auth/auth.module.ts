@@ -5,11 +5,14 @@ import * as dotenv from 'dotenv';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './jwt.guard';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RolesGuard } from './roles.guard';
+import { UserModule } from '../user/user.module';
 
 dotenv.config();
 
 @Module({
   imports: [
+    UserModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
@@ -22,6 +25,10 @@ dotenv.config();
     {
       provide: APP_GUARD,
       useClass: JwtGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
   exports: [AuthService],

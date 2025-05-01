@@ -3,13 +3,18 @@ import {
   Controller,
   HttpException,
   HttpStatus,
+  Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { UserEntity } from './entity/user.entity';
+import { RequestWithUser } from '../../common/interfaces/requestWithUser.interface';
+import { UpdateUser } from './dto/updateUser.dto';
+import { UpdateEmail } from './dto/updateEmail.dto';
 
 @Controller('user')
 export class UserController {
@@ -43,5 +48,42 @@ export class UserController {
       );
     }
     return new UserEntity(user);
+  }
+
+  @Patch('update')
+  async updateUser(
+    @Req() req: RequestWithUser,
+    @Body() updateUser: UpdateUser,
+  ): Promise<UserEntity> {
+    const jwtPayload = req.user;
+    const newUser = await this.userService.updateUser(
+      jwtPayload.id,
+      updateUser,
+    );
+    if (!newUser) {
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return new UserEntity(newUser);
+  }
+
+  @Patch('update-email')
+  async updateEmail(
+    @Req() req: RequestWithUser,
+    @Body() updateEmail: UpdateEmail,
+  ): Promise<string> {
+    if (req.user.email !== updateEmail.currentEmail) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    const newEmail = await this.userService.updateEmail(updateEmail);
+    if (!newEmail) {
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return newEmail;
   }
 }

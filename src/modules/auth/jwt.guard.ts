@@ -10,6 +10,8 @@ import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { JwtPayload } from '../../common/interfaces/jwtPayload.interface';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
+import { RequestWithUser } from './../../../dist/common/interfaces/requestWithUser.interface.d';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -17,6 +19,7 @@ export class JwtGuard implements CanActivate {
     private reflector: Reflector,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private userService: UserService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -36,7 +39,13 @@ export class JwtGuard implements CanActivate {
       const payload: JwtPayload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
-      if (payload.email && payload.id) {
+      if (payload.email && payload.id && payload.role) {
+        const verifyJwt = await this.userService.findByJwt(payload);
+        if (!verifyJwt) {
+          return false;
+        }
+        const request = context.switchToHttp().getRequest<RequestWithUser>();
+        request.user = payload;
         return true;
       }
       return false;
