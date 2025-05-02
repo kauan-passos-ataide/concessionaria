@@ -10,8 +10,8 @@ import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { JwtPayload } from '../../common/interfaces/jwtPayload.interface';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
-import { RequestWithUser } from './../../../dist/common/interfaces/requestWithUser.interface.d';
-import { UserService } from '../user/user.service';
+import { RequestWithUser } from '../../common/interfaces/requestWithUser.interface';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -19,7 +19,7 @@ export class JwtGuard implements CanActivate {
     private reflector: Reflector,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private userService: UserService,
+    private authService: AuthService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -40,7 +40,7 @@ export class JwtGuard implements CanActivate {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
       if (payload.email && payload.id && payload.role) {
-        const verifyJwt = await this.userService.findByJwt(payload);
+        const verifyJwt = await this.authService.findByJwt(payload);
         if (!verifyJwt) {
           return false;
         }

@@ -29,7 +29,7 @@ model User {
   firstName     String   @db.VarChar(50)
   lastName      String   @db.VarChar(50)
   email         String   @unique @db.VarChar(254)
-  password      String   @db.VarChar(100)
+  password      String
   role          Role     @default(USER)
   createdAt     DateTime @default(now()) @db.Timestamp(0)
   updateAt      DateTime @updatedAt

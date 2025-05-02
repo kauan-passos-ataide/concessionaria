@@ -3,9 +3,11 @@ import {
   Controller,
   HttpException,
   HttpStatus,
+  InternalServerErrorException,
   Patch,
   Post,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Public } from '../../common/decorators/public.decorator';
@@ -15,6 +17,7 @@ import { UserEntity } from './entity/user.entity';
 import { RequestWithUser } from '../../common/interfaces/requestWithUser.interface';
 import { UpdateUser } from './dto/updateUser.dto';
 import { UpdateEmail } from './dto/updateEmail.dto';
+import { UpdatePassword } from './dto/updatePassword.dto';
 
 @Controller('user')
 export class UserController {
@@ -42,10 +45,7 @@ export class UserController {
     }
     const user = await this.userService.signUp(signUpDto);
     if (user === null) {
-      throw new HttpException(
-        'Internal server error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException();
     }
     return new UserEntity(user);
   }
@@ -61,10 +61,7 @@ export class UserController {
       updateUser,
     );
     if (!newUser) {
-      throw new HttpException(
-        'Internal server error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException();
     }
     return new UserEntity(newUser);
   }
@@ -73,17 +70,40 @@ export class UserController {
   async updateEmail(
     @Req() req: RequestWithUser,
     @Body() updateEmail: UpdateEmail,
-  ): Promise<string> {
+  ): Promise<{ newEmail: string }> {
     if (req.user.email !== updateEmail.currentEmail) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      throw new UnauthorizedException();
     }
     const newEmail = await this.userService.updateEmail(updateEmail);
     if (!newEmail) {
-      throw new HttpException(
-        'Internal server error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException();
     }
-    return newEmail;
+    return { newEmail };
+  }
+
+  @Patch('update-password')
+  async updatePassword(
+    @Req() req: RequestWithUser,
+    @Body() updatePassword: UpdatePassword,
+  ): Promise<{ updatePassword: boolean }> {
+    const user = await this.userService.findByEmail(req.user.email);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    const comparePassword = await this.userService.comparePassword(
+      user,
+      updatePassword,
+    );
+    if (!comparePassword) {
+      throw new UnauthorizedException();
+    }
+    const password = await this.userService.updatePassword(
+      req.user.id,
+      updatePassword,
+    );
+    if (!password) {
+      throw new InternalServerErrorException();
+    }
+    return { updatePassword: true };
   }
 }

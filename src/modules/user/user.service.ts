@@ -4,9 +4,9 @@ import { LoginDto } from './dto/login.dto';
 import { UserEntity } from './entity/user.entity';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SignUpDto } from './dto/signup.dto';
-import { JwtPayload } from '../../common/interfaces/jwtPayload.interface';
 import { UpdateUser } from './dto/updateUser.dto';
 import { UpdateEmail } from './dto/updateEmail.dto';
+import { UpdatePassword } from './dto/updatePassword.dto';
 
 @Injectable()
 export class UserService {
@@ -65,21 +65,6 @@ export class UserService {
     }
   }
 
-  async findByJwt(jwtPayload: JwtPayload): Promise<true | false> {
-    try {
-      const { email, id } = jwtPayload;
-      const user = await this.prisma.user.findUnique({
-        where: { email },
-      });
-      if (user?.id === id) {
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
-
   async updateUser(id: string, data: UpdateUser): Promise<UserEntity | null> {
     try {
       return await this.prisma.user.update({
@@ -101,6 +86,45 @@ export class UserService {
         return false;
       }
       return userWithNewEmail.email;
+    } catch {
+      return false;
+    }
+  }
+
+  async updatePassword(
+    id: string,
+    updatePassword: UpdatePassword,
+  ): Promise<boolean> {
+    try {
+      const hashPassword = await this.authService.hashPassword(
+        updatePassword.password,
+      );
+      const userWithNewEmail = await this.prisma.user.update({
+        where: { id },
+        data: { password: hashPassword },
+      });
+      if (!userWithNewEmail) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async comparePassword(
+    user: UserEntity,
+    updatePassword: UpdatePassword,
+  ): Promise<boolean> {
+    try {
+      const verifyPassword = await this.authService.comparePassword({
+        password: updatePassword.currentPassword,
+        hash: user.password,
+      });
+      if (!verifyPassword) {
+        return false;
+      }
+      return true;
     } catch {
       return false;
     }

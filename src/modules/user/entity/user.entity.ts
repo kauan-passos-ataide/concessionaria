@@ -19,9 +19,11 @@ export class UserEntity implements User {
   street: string;
   zipCode: string;
   phone: string;
-  role: $Enums.Role;
   createdAt: Date;
   updateAt: Date;
+
+  @Exclude()
+  role: $Enums.Role;
 
   @Exclude()
   password: string;

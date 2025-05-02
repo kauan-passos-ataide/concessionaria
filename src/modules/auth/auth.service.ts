@@ -3,10 +3,15 @@ import * as bcrypt from 'bcrypt';
 import { HashPassword } from './dto/hashPassword.dto';
 import { GenerateJwtToken } from './dto/generate-jwt-token.dto';
 import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from '../../common/interfaces/jwtPayload.interface';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private prisma: PrismaService,
+  ) {}
 
   async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 10);
@@ -18,5 +23,20 @@ export class AuthService {
 
   async generateJwtToken(data: GenerateJwtToken): Promise<string> {
     return this.jwtService.signAsync(data);
+  }
+
+  async findByJwt(jwtPayload: JwtPayload): Promise<true | false> {
+    try {
+      const { email, id } = jwtPayload;
+      const user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+      if (user?.id === id) {
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   }
 }

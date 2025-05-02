@@ -11,13 +11,17 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   app.setGlobalPrefix('api');
-  await app.listen(port);
+
   app.useGlobalPipes(
     new ValidationPipe({
       disableErrorMessages: true,
       whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
+
+  await app.listen(port);
   console.log(`Server running on port ${port}`);
 }
 bootstrap();
