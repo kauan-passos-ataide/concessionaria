@@ -4,7 +4,7 @@ export class UpdateEmail {
   @IsNotEmpty()
   @IsEmail()
   @MaxLength(254)
-  currentEmail: string;
+  current_email: string;
 
   @IsNotEmpty()
   @IsEmail()

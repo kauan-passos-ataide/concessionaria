@@ -4,7 +4,7 @@ export class UpdatePassword {
   @IsNotEmpty()
   @IsString()
   @Length(8, 30)
-  currentPassword: string;
+  current_password: string;
 
   @IsNotEmpty()
   @IsString()

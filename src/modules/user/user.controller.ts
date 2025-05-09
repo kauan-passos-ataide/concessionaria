@@ -13,11 +13,11 @@ import { UserService } from './user.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { SignUpDto } from './dto/signup.dto';
-import { UserEntity } from './entity/user.entity';
 import { RequestWithUser } from '../../common/interfaces/requestWithUser.interface';
 import { UpdateUser } from './dto/updateUser.dto';
 import { UpdateEmail } from './dto/updateEmail.dto';
 import { UpdatePassword } from './dto/updatePassword.dto';
+import { UserDto } from './dto/user.dto';
 
 @Controller('user')
 export class UserController {
@@ -38,7 +38,7 @@ export class UserController {
 
   @Public()
   @Post('signup')
-  async signUp(@Body() signUpDto: SignUpDto): Promise<UserEntity> {
+  async signUp(@Body() signUpDto: SignUpDto): Promise<UserDto> {
     const verifyEmail = await this.userService.findByEmail(signUpDto.email);
     if (verifyEmail !== null) {
       throw new HttpException('Email already exist', HttpStatus.UNAUTHORIZED);
@@ -47,14 +47,14 @@ export class UserController {
     if (user === null) {
       throw new InternalServerErrorException();
     }
-    return new UserEntity(user);
+    return new UserDto(user);
   }
 
   @Patch('update')
   async updateUser(
     @Req() req: RequestWithUser,
     @Body() updateUser: UpdateUser,
-  ): Promise<UserEntity> {
+  ): Promise<UserDto> {
     const jwtPayload = req.user;
     const newUser = await this.userService.updateUser(
       jwtPayload.id,
@@ -63,7 +63,7 @@ export class UserController {
     if (!newUser) {
       throw new InternalServerErrorException();
     }
-    return new UserEntity(newUser);
+    return new UserDto(newUser);
   }
 
   @Patch('update-email')
@@ -71,7 +71,7 @@ export class UserController {
     @Req() req: RequestWithUser,
     @Body() updateEmail: UpdateEmail,
   ): Promise<{ newEmail: string }> {
-    if (req.user.email !== updateEmail.currentEmail) {
+    if (req.user.email !== updateEmail.current_email) {
       throw new UnauthorizedException();
     }
     const newEmail = await this.userService.updateEmail(updateEmail);
@@ -105,5 +105,18 @@ export class UserController {
       throw new InternalServerErrorException();
     }
     return { updatePassword: true };
+  }
+
+  @Patch('new-seller')
+  async newSeller(@Req() req: RequestWithUser): Promise<UserDto> {
+    const verify = await this.userService.findById(req.user.id);
+    if (!verify) {
+      throw new UnauthorizedException();
+    }
+    const updateUser = await this.userService.newSeller(req.user.id);
+    if (!updateUser) {
+      throw new InternalServerErrorException();
+    }
+    return new UserDto(updateUser);
   }
 }

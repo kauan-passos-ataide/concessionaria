@@ -1,12 +1,11 @@
 import { $Enums, User } from '@prisma/client';
-import { Exclude } from 'class-transformer';
 
 export class UserEntity implements User {
-  @Exclude()
   id: string;
-
-  firstName: string;
-  lastName: string;
+  role: $Enums.Role;
+  password: string;
+  first_name: string;
+  last_name: string;
   email: string;
   cpf: string;
   cnpj: string | null;
@@ -14,21 +13,11 @@ export class UserEntity implements User {
   complement: string | null;
   country: string;
   neighborhood: string;
-  numberAddress: string;
+  number_address: string;
   state: string;
   street: string;
-  zipCode: string;
+  zip_code: string;
   phone: string;
-  createdAt: Date;
-  updateAt: Date;
-
-  @Exclude()
-  role: $Enums.Role;
-
-  @Exclude()
-  password: string;
-
-  constructor(partial: Partial<UserEntity>) {
-    Object.assign(this, partial);
-  }
+  created_at: Date;
+  update_at: Date;
 }

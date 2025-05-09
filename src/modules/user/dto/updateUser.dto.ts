@@ -5,12 +5,12 @@ export class UpdateUser implements Partial<UserEntity> {
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  firstName?: string;
+  first_name?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  lastName?: string;
+  last_name?: string;
 
   @IsOptional()
   @IsString()
@@ -45,7 +45,7 @@ export class UpdateUser implements Partial<UserEntity> {
   @IsOptional()
   @IsString()
   @MaxLength(10)
-  numberAddress?: string;
+  number_address?: string;
 
   @IsOptional()
   @IsString()
@@ -60,7 +60,7 @@ export class UpdateUser implements Partial<UserEntity> {
   @IsOptional()
   @IsString()
   @MaxLength(9)
-  zipCode?: string;
+  zip_code?: string;
 
   @IsOptional()
   @IsString()

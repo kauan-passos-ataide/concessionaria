@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '../auth/auth.service';
 import { LoginDto } from './dto/login.dto';
-import { UserEntity } from './entity/user.entity';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SignUpDto } from './dto/signup.dto';
 import { UpdateUser } from './dto/updateUser.dto';
 import { UpdateEmail } from './dto/updateEmail.dto';
 import { UpdatePassword } from './dto/updatePassword.dto';
+import { UserDto } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -39,7 +39,7 @@ export class UserService {
     }
   }
 
-  async signUp(signUpDto: SignUpDto): Promise<UserEntity | null> {
+  async signUp(signUpDto: SignUpDto): Promise<UserDto | null> {
     try {
       const newPassword = await this.authService.hashPassword(
         signUpDto.password,
@@ -54,7 +54,7 @@ export class UserService {
     }
   }
 
-  async findByEmail(email: string): Promise<UserEntity | null> {
+  async findByEmail(email: string): Promise<UserDto | null> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email },
@@ -65,12 +65,24 @@ export class UserService {
     }
   }
 
-  async updateUser(id: string, data: UpdateUser): Promise<UserEntity | null> {
+  async findById(id: string): Promise<UserDto | null> {
     try {
-      return await this.prisma.user.update({
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
+      return user;
+    } catch {
+      return null;
+    }
+  }
+
+  async updateUser(id: string, data: UpdateUser): Promise<UserDto | null> {
+    try {
+      const updateUser = await this.prisma.user.update({
         where: { id },
         data,
       });
+      return updateUser;
     } catch {
       return null;
     }
@@ -79,7 +91,7 @@ export class UserService {
   async updateEmail(updateEmail: UpdateEmail): Promise<string | false> {
     try {
       const userWithNewEmail = await this.prisma.user.update({
-        where: { email: updateEmail.currentEmail },
+        where: { email: updateEmail.current_email },
         data: { email: updateEmail.email },
       });
       if (!userWithNewEmail) {
@@ -113,12 +125,12 @@ export class UserService {
   }
 
   async comparePassword(
-    user: UserEntity,
+    user: UserDto,
     updatePassword: UpdatePassword,
   ): Promise<boolean> {
     try {
       const verifyPassword = await this.authService.comparePassword({
-        password: updatePassword.currentPassword,
+        password: updatePassword.current_password,
         hash: user.password,
       });
       if (!verifyPassword) {
@@ -127,6 +139,18 @@ export class UserService {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  async newSeller(id: string): Promise<UserDto | null> {
+    try {
+      const updateUser = await this.prisma.user.update({
+        where: { id },
+        data: { role: 'SELLER' },
+      });
+      return updateUser;
+    } catch {
+      return null;
     }
   }
 }

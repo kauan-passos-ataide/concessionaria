@@ -1,35 +1,22 @@
+import { $Enums } from '@prisma/client';
+import { Exclude, Transform } from 'class-transformer';
+import { UserEntity } from '../entity/user.entity';
 import {
   IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
-  Length,
   MaxLength,
 } from 'class-validator';
-import { UserEntity } from '../entity/user.entity';
-import { Transform } from 'class-transformer';
 
-export class SignUpDto
-  implements
-    Pick<
-      UserEntity,
-      | 'first_name'
-      | 'last_name'
-      | 'email'
-      | 'cpf'
-      | 'cnpj'
-      | 'password'
-      | 'city'
-      | 'complement'
-      | 'country'
-      | 'neighborhood'
-      | 'number_address'
-      | 'state'
-      | 'street'
-      | 'zip_code'
-      | 'phone'
-    >
-{
+export class UserDto implements UserEntity {
+  @Exclude()
+  id: string;
+  @Exclude()
+  role: $Enums.Role;
+  @Exclude()
+  password: string;
+
   @IsNotEmpty()
   @IsString()
   @MaxLength(50)
@@ -55,11 +42,6 @@ export class SignUpDto
   @MaxLength(18)
   @Transform(({ value }: { value: string | undefined }) => value ?? null)
   cnpj: string | null;
-
-  @IsNotEmpty()
-  @IsString()
-  @Length(8, 30)
-  password: string;
 
   @IsNotEmpty()
   @IsString()
@@ -106,4 +88,14 @@ export class SignUpDto
   @IsString()
   @MaxLength(15)
   phone: string;
+
+  @IsNotEmpty()
+  created_at: Date;
+
+  @IsNotEmpty()
+  update_at: Date;
+
+  constructor(partial: Partial<UserDto>) {
+    Object.assign(this, partial);
+  }
 }
