@@ -5,7 +5,7 @@ services:
     container_name: postgres_db
     restart: always
     env_file:
-      - .env
+      - .env.production
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -34,7 +34,7 @@ services:
       postgres_db:
         condition: service_healthy
     env_file:
-      - .env
+      - .env.production
     networks:
       - prisma-network
 networks:

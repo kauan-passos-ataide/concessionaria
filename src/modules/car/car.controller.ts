@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Get,
   InternalServerErrorException,
   Post,
+  Query,
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -12,8 +14,9 @@ import { RequestWithUser } from 'src/common/interfaces/requestWithUser.interface
 import { CreateCarDto } from './dto/createCar.dto';
 import { CarService } from './car.service';
 import { CarDto } from './dto/car.dto';
+import { Public } from '../../common/decorators/public.decorator';
+import { FilterCarDto } from './dto/filterCar.dto';
 
-@Roles('SELLER')
 @Controller('car')
 export class CarController {
   constructor(
@@ -21,6 +24,7 @@ export class CarController {
     private readonly carService: CarService,
   ) {}
 
+  @Roles('SELLER')
   @Post()
   async createCar(
     @Req() req: RequestWithUser,
@@ -30,10 +34,24 @@ export class CarController {
     if (!user) {
       throw new UnauthorizedException();
     }
-    const car = await this.carService.createCar(user.id, createCarDto);
-    if (!car) {
+    const carEntity = await this.carService.createCar(user.id, createCarDto);
+    if (!carEntity) {
       throw new InternalServerErrorException();
     }
-    return new CarDto(car);
+    return new CarDto(carEntity);
+  }
+
+  @Public()
+  @Get('filter')
+  async findCarsByFilter(
+    @Query()
+    filterCarDto: FilterCarDto,
+  ): Promise<CarDto[]> {
+    const cars = await this.carService.findCarsByFilter(filterCarDto);
+    if (!cars) {
+      throw new InternalServerErrorException();
+    }
+    const carDto = cars.map((car) => new CarDto(car));
+    return carDto;
   }
 }

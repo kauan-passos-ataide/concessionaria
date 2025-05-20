@@ -8,9 +8,8 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { CarEntity } from '../entity/car.entity';
 
-export class CarDto implements CarEntity {
+export class CarDto {
   @Exclude()
   seller_id: string;
 
@@ -38,6 +37,10 @@ export class CarDto implements CarEntity {
   @MaxLength(30)
   model: string;
 
+  @IsNotEmpty()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(1)
+  @Max(9999999999.99)
   @Transform(({ value }) => Number(value))
   price: Decimal;
 

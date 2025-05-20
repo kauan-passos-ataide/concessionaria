@@ -25,8 +25,8 @@ export class UserController {
 
   @Public()
   @Post('login')
-  async login(@Body() loginDto: LoginDto): Promise<string> {
-    const token = await this.userService.login(loginDto);
+  async login(@Body() { email, password }: LoginDto): Promise<string> {
+    const token = await this.userService.login({ email, password });
     if (token === null) {
       throw new HttpException(
         'Email or password incorrect',
@@ -108,7 +108,9 @@ export class UserController {
   }
 
   @Patch('new-seller')
-  async newSeller(@Req() req: RequestWithUser): Promise<UserDto> {
+  async newSeller(
+    @Req() req: RequestWithUser,
+  ): Promise<{ newAccessToken: string }> {
     const verify = await this.userService.findById(req.user.id);
     if (!verify) {
       throw new UnauthorizedException();
@@ -117,6 +119,6 @@ export class UserController {
     if (!updateUser) {
       throw new InternalServerErrorException();
     }
-    return new UserDto(updateUser);
+    return { newAccessToken: updateUser };
   }
 }

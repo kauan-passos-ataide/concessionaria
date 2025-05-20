@@ -142,13 +142,21 @@ export class UserService {
     }
   }
 
-  async newSeller(id: string): Promise<UserDto | null> {
+  async newSeller(id: string): Promise<string | null> {
     try {
       const updateUser = await this.prisma.user.update({
         where: { id },
         data: { role: 'SELLER' },
       });
-      return updateUser;
+      const newAccessToken = await this.authService.generateJwtToken({
+        id: updateUser.id,
+        email: updateUser.email,
+        role: updateUser.role,
+      });
+      if (!newAccessToken) {
+        return null;
+      }
+      return newAccessToken;
     } catch {
       return null;
     }
