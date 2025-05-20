@@ -102,4 +102,35 @@ export class CarService {
       return null;
     }
   }
+
+  async deleteCar(carId: string): Promise<boolean> {
+    try {
+      const deletedCar = await this.prisma.car.delete({
+        where: { id: carId },
+      });
+      if (!deletedCar) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async compareUserIdWithSellerId(
+    userId: string,
+    carId: string,
+  ): Promise<boolean> {
+    try {
+      const car = await this.prisma.car.findUnique({
+        where: { id: carId },
+      });
+      if (!car || car.seller_id !== userId) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   InternalServerErrorException,
   Post,
@@ -53,5 +54,23 @@ export class CarController {
     }
     const carDto = cars.map((car) => new CarDto(car));
     return carDto;
+  }
+
+  @Roles('SELLER')
+  @Delete()
+  async deleteCar(
+    @Req() req: RequestWithUser,
+    @Query() id: string,
+  ): Promise<{ carDeletedSuccessfully: true }> {
+    const compareUserIdWithSellerId =
+      await this.carService.compareUserIdWithSellerId(req.user.id, id);
+    if (compareUserIdWithSellerId === false) {
+      throw new UnauthorizedException();
+    }
+    const deletedCar = await this.carService.deleteCar(id);
+    if (!deletedCar) {
+      throw new InternalServerErrorException();
+    }
+    return { carDeletedSuccessfully: true };
   }
 }
