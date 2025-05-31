@@ -9,5 +9,6 @@ export class CarEntity implements Car {
   model: string;
   price: Decimal;
   year: number;
+  stock: number;
   seller_id: string;
 }

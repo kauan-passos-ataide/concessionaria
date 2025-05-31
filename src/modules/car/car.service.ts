@@ -37,22 +37,11 @@ export class CarService {
   async findCarsByFilter(
     filterCarDto: FilterCarDto,
   ): Promise<CarEntity[] | null> {
-    try {
-      // if (
-      //   !color &&
-      //   !maxPrice &&
-      //   !minPrice &&
-      //   !maxYear &&
-      //   !minYear &&
-      //   !model &&
-      //   !name
-      // ) {
-      //   return null;
-      // }
-      const pageSize = 20;
-      const take = pageSize;
-      const skip = (filterCarDto.page - 1) * pageSize;
+    const pageSize = 20;
+    const take = pageSize;
+    const skip = (filterCarDto.page - 1) * pageSize;
 
+    try {
       const where: Prisma.CarWhereInput = {
         ...(typeof filterCarDto.color === 'string' &&
           filterCarDto.color.trim() !== '' && {
@@ -91,13 +80,37 @@ export class CarService {
             lte: filterCarDto.maxYear,
           }),
         },
+        stock: { gt: 0 },
       };
       const findCar: CarEntity[] = await this.prisma.car.findMany({
         skip,
         take,
         where,
+        orderBy: { name: 'asc' },
       });
       return findCar;
+    } catch {
+      return null;
+    }
+  }
+  async findSoldCars(
+    page: number,
+    seller_id: string,
+  ): Promise<CarEntity[] | null> {
+    const pageSize = 20;
+    const take = pageSize;
+    const skip = (page - 1) * pageSize;
+
+    try {
+      return await this.prisma.car.findMany({
+        skip,
+        take,
+        where: {
+          seller_id,
+          stock: { equals: 0 },
+        },
+        orderBy: { name: 'asc' },
+      });
     } catch {
       return null;
     }

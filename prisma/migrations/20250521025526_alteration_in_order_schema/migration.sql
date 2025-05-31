@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "order" ADD COLUMN     "order_number" SERIAL NOT NULL;

@@ -1,6 +1,7 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { Exclude, Transform } from 'class-transformer';
 import {
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -45,7 +46,7 @@ export class CarDto {
   price: Decimal;
 
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   @Min(1000)
   @Max(9999)
   year: number;

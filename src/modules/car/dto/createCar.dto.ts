@@ -1,6 +1,7 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { CarEntity } from '../entity/car.entity';
 import {
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -43,7 +44,7 @@ export class CreateCarDto
   price: Decimal;
 
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
   @Min(1000)
   @Max(9999)
   year: number;

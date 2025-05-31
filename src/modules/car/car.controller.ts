@@ -17,6 +17,7 @@ import { CarService } from './car.service';
 import { CarDto } from './dto/car.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { FilterCarDto } from './dto/filterCar.dto';
+import { FindSoldCarsDto } from './dto/findSoldCars.dto';
 
 @Controller('car')
 export class CarController {
@@ -52,8 +53,7 @@ export class CarController {
     if (!cars) {
       throw new InternalServerErrorException();
     }
-    const carDto = cars.map((car) => new CarDto(car));
-    return carDto;
+    return cars.map((car) => new CarDto(car));
   }
 
   @Roles('SELLER')
@@ -72,5 +72,21 @@ export class CarController {
       throw new InternalServerErrorException();
     }
     return { carDeletedSuccessfully: true };
+  }
+
+  @Roles('SELLER')
+  @Get('sold')
+  async findSoldCars(
+    @Req() req: RequestWithUser,
+    @Query() findSoldCarsDto: FindSoldCarsDto,
+  ) {
+    const cars = await this.carService.findSoldCars(
+      findSoldCarsDto.page,
+      req.user.id,
+    );
+    if (!cars) {
+      throw new InternalServerErrorException();
+    }
+    return cars.map((car) => new CarDto(car));
   }
 }
