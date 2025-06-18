@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Req,
+  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -18,6 +19,10 @@ import { UpdateUser } from './dto/updateUser.dto';
 import { UpdateEmail } from './dto/updateEmail.dto';
 import { UpdatePassword } from './dto/updatePassword.dto';
 import { UserDto } from './dto/user.dto';
+import { Response } from 'express';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Controller('user')
 export class UserController {
@@ -25,7 +30,11 @@ export class UserController {
 
   @Public()
   @Post('login')
-  async login(@Body() { email, password }: LoginDto): Promise<string> {
+  async login(
+    @Body() { email, password }: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ accessToken: string }> {
+    console.log('recebido');
     const token = await this.userService.login({ email, password });
     if (token === null) {
       throw new HttpException(
@@ -33,12 +42,21 @@ export class UserController {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    throw new HttpException(token, HttpStatus.CREATED);
+    res.cookie('token', token, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'lax',
+    });
+    return { accessToken: token };
   }
 
   @Public()
   @Post('signup')
-  async signUp(@Body() signUpDto: SignUpDto): Promise<UserDto> {
+  async signUp(
+    @Body() signUpDto: SignUpDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<UserDto> {
     const verifyEmail = await this.userService.findByEmail(signUpDto.email);
     if (verifyEmail !== null) {
       throw new HttpException('Email already exist', HttpStatus.UNAUTHORIZED);
@@ -47,6 +65,16 @@ export class UserController {
     if (user === null) {
       throw new InternalServerErrorException();
     }
+    const token = await this.userService.login({
+      email: signUpDto.email,
+      password: signUpDto.password,
+    });
+    res.cookie('token', token, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'lax',
+    });
     return new UserDto(user);
   }
 
@@ -110,15 +138,22 @@ export class UserController {
   @Patch('new-seller')
   async newSeller(
     @Req() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{ newAccessToken: string }> {
     const verify = await this.userService.findById(req.user.id);
     if (!verify) {
       throw new UnauthorizedException();
     }
-    const updateUser = await this.userService.newSeller(req.user.id);
-    if (!updateUser) {
+    const tokenNewRole = await this.userService.newSeller(req.user.id);
+    if (!tokenNewRole) {
       throw new InternalServerErrorException();
     }
-    return { newAccessToken: updateUser };
+    res.cookie('token', tokenNewRole, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'strict',
+    });
+    return { newAccessToken: tokenNewRole };
   }
 }

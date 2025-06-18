@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from '../prisma/prisma.module';
-import { UserModule } from '../modules/user/user.module';
-import { CarModule } from '../modules/car/car.module';
-import { OrderModule } from '../modules/order/order.module';
-import { AuthModule } from '../modules/auth/auth.module';
+import { PrismaModule } from '../../prisma/prisma.module';
+import { UserModule } from '../user/user.module';
+import { CarModule } from '../car/car.module';
+import { OrderModule } from '../order/order.module';
+import { AuthModule } from '../auth/auth.module';
 import { AppController } from './app.controller';
 import * as dotenv from 'dotenv';
 
