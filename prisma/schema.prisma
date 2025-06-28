@@ -15,6 +15,7 @@ datasource db {
 
 model User {
   id             String   @id @default(uuid())
+  secret_otp     String?
   city           String   @db.VarChar(50)
   country        String   @db.VarChar(50)
   zip_code       String   @db.VarChar(9)

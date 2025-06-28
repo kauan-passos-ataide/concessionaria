@@ -10,12 +10,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { RequestWithUser } from 'src/common/interfaces/requestWithUser.interface';
 import { CreateCarDto } from './dto/createCar.dto';
 import { CarService } from './car.service';
 import { CarDto } from './dto/car.dto';
-import { Public } from '../../common/decorators/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { FilterCarDto } from './dto/filterCar.dto';
 import { FindSoldCarsDto } from './dto/findSoldCars.dto';
 

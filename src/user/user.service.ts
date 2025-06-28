@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { AuthService } from '../auth/auth.service';
+import { AuthService } from '../modules/auth/auth.service';
 import { LoginDto } from './dto/login.dto';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { SignUpDto } from './dto/signup.dto';
 import { UpdateUser } from './dto/updateUser.dto';
 import { UpdateEmail } from './dto/updateEmail.dto';
 import { UpdatePassword } from './dto/updatePassword.dto';
 import { UserDto } from './dto/user.dto';
+import { OtpCodeDto } from './dto/otpCode.dto';
+import { authenticator } from 'otplib';
+import * as QRCode from 'qrcode';
 
 @Injectable()
 export class UserService {
@@ -15,18 +18,37 @@ export class UserService {
     private prisma: PrismaService,
   ) {}
 
-  async login(loginDto: LoginDto): Promise<string | null> {
+  async login(loginDto: LoginDto): Promise<boolean> {
     try {
-      const user = await this.findByEmail(loginDto.email);
+      const user = await this.verifyEmailAndComparePassword(loginDto);
       if (!user) {
-        return null;
+        return false;
       }
-      const verifyPassword = await this.authService.comparePassword({
-        password: loginDto.password,
-        hash: user.password,
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async verifyOtpCode({
+    code,
+    email,
+    password,
+  }: OtpCodeDto): Promise<string | false> {
+    try {
+      const user = await this.verifyEmailAndComparePassword({
+        email,
+        password,
       });
-      if (verifyPassword === false) {
-        return null;
+      if (!user) {
+        return false;
+      }
+      const isValid = authenticator.verify({
+        token: code,
+        secret: user.secret_otp as string,
+      });
+      if (!isValid) {
+        return false;
       }
       const token = await this.authService.generateJwtToken({
         id: user.id,
@@ -35,20 +57,32 @@ export class UserService {
       });
       return token;
     } catch {
-      return null;
+      return false;
     }
   }
 
-  async signUp(signUpDto: SignUpDto): Promise<UserDto | null> {
+  async signUp(signUpDto: SignUpDto): Promise<string | null> {
     try {
       const newPassword = await this.authService.hashPassword(
         signUpDto.password,
       );
       signUpDto.password = newPassword;
-      const createUser = await this.prisma.user.create({
-        data: signUpDto,
+      const user = await this.prisma.$transaction(async (tx) => {
+        const createUser = await tx.user.create({
+          data: signUpDto,
+        });
+        const secret = authenticator.generateSecret();
+        return await tx.user.update({
+          where: { id: createUser.id },
+          data: { secret_otp: secret },
+        });
       });
-      return createUser;
+      const otpAuth = authenticator.keyuri(
+        user.email,
+        'KPA Systems',
+        user.secret_otp as string,
+      );
+      return await QRCode.toDataURL(otpAuth);
     } catch {
       return null;
     }
@@ -159,6 +193,28 @@ export class UserService {
       return newAccessToken;
     } catch {
       return null;
+    }
+  }
+
+  async verifyEmailAndComparePassword({
+    email,
+    password,
+  }: LoginDto): Promise<UserDto | false> {
+    try {
+      const user = await this.findByEmail(email);
+      if (!user) {
+        return false;
+      }
+      const verifyPassword = await this.authService.comparePassword({
+        password,
+        hash: user.password,
+      });
+      if (verifyPassword === false) {
+        return false;
+      }
+      return user;
+    } catch {
+      return false;
     }
   }
 }

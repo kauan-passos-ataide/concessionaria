@@ -11,16 +11,17 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { Public } from '../../common/decorators/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { SignUpDto } from './dto/signup.dto';
-import { RequestWithUser } from '../../common/interfaces/requestWithUser.interface';
+import { RequestWithUser } from '../common/interfaces/requestWithUser.interface';
 import { UpdateUser } from './dto/updateUser.dto';
 import { UpdateEmail } from './dto/updateEmail.dto';
 import { UpdatePassword } from './dto/updatePassword.dto';
 import { UserDto } from './dto/user.dto';
 import { Response } from 'express';
 import * as dotenv from 'dotenv';
+import { OtpCodeDto } from './dto/otpCode.dto';
 
 dotenv.config();
 
@@ -32,15 +33,30 @@ export class UserController {
   @Post('login')
   async login(
     @Body() { email, password }: LoginDto,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<{ accessToken: string }> {
-    console.log('recebido');
-    const token = await this.userService.login({ email, password });
-    if (token === null) {
+  ): Promise<{ userChecked: boolean }> {
+    const user = await this.userService.login({ email, password });
+    if (!user) {
       throw new HttpException(
         'Email or password incorrect',
         HttpStatus.UNAUTHORIZED,
       );
+    }
+    return { userChecked: true };
+  }
+
+  @Public()
+  @Post('2fa-auth')
+  async verifyOtpCode(
+    @Body() { email, password, code }: OtpCodeDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ accessToken: string }> {
+    const token = await this.userService.verifyOtpCode({
+      email,
+      password,
+      code,
+    });
+    if (!token) {
+      throw new UnauthorizedException();
     }
     res.cookie('token', token, {
       httpOnly: true,
@@ -52,30 +68,17 @@ export class UserController {
   }
 
   @Public()
-  @Post('signup')
-  async signUp(
-    @Body() signUpDto: SignUpDto,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<UserDto> {
+  @Post('sign-up')
+  async signUp(@Body() signUpDto: SignUpDto): Promise<{ srcQrCode: string }> {
     const verifyEmail = await this.userService.findByEmail(signUpDto.email);
-    if (verifyEmail !== null) {
+    if (verifyEmail) {
       throw new HttpException('Email already exist', HttpStatus.UNAUTHORIZED);
     }
-    const user = await this.userService.signUp(signUpDto);
-    if (user === null) {
+    const srcQrCode = await this.userService.signUp(signUpDto);
+    if (!srcQrCode) {
       throw new InternalServerErrorException();
     }
-    const token = await this.userService.login({
-      email: signUpDto.email,
-      password: signUpDto.password,
-    });
-    res.cookie('token', token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: process.env.NODE_ENV === 'production' ? true : false,
-      sameSite: 'lax',
-    });
-    return new UserDto(user);
+    return { srcQrCode };
   }
 
   @Patch('update')

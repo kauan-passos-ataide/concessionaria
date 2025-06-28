@@ -17,6 +17,11 @@ export class UserDto implements UserEntity {
   @Exclude()
   password: string;
 
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }: { value: string | undefined }) => value ?? null)
+  secret_otp: string | null;
+
   @IsNotEmpty()
   @IsString()
   @MaxLength(50)
