@@ -7,6 +7,7 @@ import { OrderModule } from './order/order.module';
 import { AppController } from './app.controller';
 import * as dotenv from 'dotenv';
 import { AuthModule } from './auth/auth.module';
+import { StripeModule } from './stripe/stripe.module';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ dotenv.config();
     CarModule,
     OrderModule,
     AuthModule,
+    StripeModule,
   ],
   controllers: [AppController],
 })

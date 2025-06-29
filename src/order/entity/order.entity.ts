@@ -4,7 +4,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 export class OrderEntity implements Order {
   id: string;
   car_id: string;
-  payment_method: $Enums.PaymentMethod;
+  payment_method: $Enums.PaymentMethod | null;
   seller_id: string;
   created_at: Date;
   purchaser_id: string;

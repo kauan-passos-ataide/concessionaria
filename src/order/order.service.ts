@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/createOrder.dto';
-import { PaymentMethod } from '@prisma/client';
-import { OrderDto } from './dto/order.dto';
+import { StripeService } from '../stripe/stripe.service';
 
 @Injectable()
 export class OrderService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private stripeService: StripeService,
+  ) {}
   // caso estorne o dinheiro, eu coloco o status do pedido para cancelado
   // primeiramente crio o pedido, depois eu "processo a compra", caso dê certo, eu mudo o status de created para finished e retorno as seguintes informações:
   // número do pedido
@@ -18,8 +20,7 @@ export class OrderService {
   async createOrder(
     createOrderDto: CreateOrderDto,
     userId: string,
-    paymentMethod: PaymentMethod,
-  ): Promise<{ order: OrderDto; seller_name: string } | null | undefined> {
+  ): Promise<string | undefined> {
     try {
       await this.prisma.$transaction(async (tx) => {
         const car = await this.prisma.car.findUnique({
@@ -31,7 +32,7 @@ export class OrderService {
           },
         });
         if (!car) {
-          return null;
+          return undefined;
         }
         const order = await tx.order.create({
           data: {
@@ -39,53 +40,18 @@ export class OrderService {
             seller_id: car.seller_id,
             purchaser_id: userId,
             car_id: car.id,
-            payment_method: paymentMethod,
           },
         });
-        const process = this.processPayment(paymentMethod);
-        if (process === false) {
-          const canceled = await tx.order.update({
-            where: { id: order.id },
-            data: { status: 'CANCELED' },
-          });
-          return {
-            canceled,
-            seller_name: `${car.seller.first_name} ${car.seller.last_name}`,
-          };
-        }
-        const finished = await tx.order.update({
-          where: { id: order.id },
-          data: { status: 'FINISHED' },
+        const sessionId = this.stripeService.createCheckoutSession({
+          order_id: order.id,
+          name_product: car.name,
+          product_amount: Number(order.total_value),
+          quantity: 1,
         });
-        return {
-          finished,
-          seller_name: `${car.seller.first_name} ${car.seller.last_name}`,
-        };
+        return sessionId;
       });
     } catch {
-      return null;
+      return undefined;
     }
-  }
-
-  processPayment(paymentMethod: PaymentMethod): boolean {
-    switch (paymentMethod) {
-      case 'CREDIT':
-        return this.generateRandomBoolean();
-        break;
-      case 'DEBIT':
-        return this.generateRandomBoolean();
-        break;
-      case 'PIX':
-        return this.generateRandomBoolean();
-        break;
-      default:
-        return false;
-        break;
-    }
-  }
-
-  generateRandomBoolean(): boolean {
-    const result = Math.random() < 0.5;
-    return result;
   }
 }

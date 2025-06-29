@@ -3,6 +3,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   Max,
   Min,
@@ -23,9 +24,10 @@ export class OrderDto implements OrderEntity {
   @IsString()
   id: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  payment_method: $Enums.PaymentMethod;
+  @Transform(({ value }: { value: string | undefined }) => value ?? null)
+  payment_method: $Enums.PaymentMethod | null;
 
   @IsNotEmpty()
   @IsDate()

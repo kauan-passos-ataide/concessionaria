@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { AuthService } from '../modules/auth/auth.service';
 import { LoginDto } from './dto/login.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { SignUpDto } from './dto/signup.dto';
@@ -10,6 +9,7 @@ import { UserDto } from './dto/user.dto';
 import { OtpCodeDto } from './dto/otpCode.dto';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class UserService {

@@ -8,9 +8,9 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
-import { JwtPayload } from '../../common/interfaces/jwtPayload.interface';
-import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
-import { RequestWithUser } from '../../common/interfaces/requestWithUser.interface';
+import { JwtPayload } from '../common/interfaces/jwtPayload.interface';
+import { IS_PUBLIC_KEY } from '../common/decorators/public.decorator';
+import { RequestWithUser } from '../common/interfaces/requestWithUser.interface';
 import { AuthService } from './auth.service';
 
 @Injectable()
