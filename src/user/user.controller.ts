@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpException,
   HttpStatus,
   InternalServerErrorException,
@@ -19,15 +20,19 @@ import { UpdateUser } from './dto/updateUser.dto';
 import { UpdateEmail } from './dto/updateEmail.dto';
 import { UpdatePassword } from './dto/updatePassword.dto';
 import { UserDto } from './dto/user.dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import { OtpCodeDto } from './dto/otpCode.dto';
+import { AuthService } from '../auth/auth.service';
 
 dotenv.config();
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -79,6 +84,36 @@ export class UserController {
       throw new InternalServerErrorException();
     }
     return { srcQrCode };
+  }
+
+  @Public() //alterar
+  @Get('verify-role')
+  async verifyRole(@Req() req: Request) {
+    const token = req.cookies['token'] as string;
+    if (!token) {
+      throw new UnauthorizedException();
+    }
+    const payload = await this.authService.getPayload(token);
+    if (!payload) {
+      throw new UnauthorizedException();
+    }
+    const user = await this.userService.findById(payload.id);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return { role: user.role };
+  }
+
+  @Public() //alterar
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.cookie('token', '', {
+      httpOnly: true,
+      maxAge: 0,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'strict',
+      path: '/',
+    });
   }
 
   @Patch('update')

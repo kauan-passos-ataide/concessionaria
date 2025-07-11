@@ -5,12 +5,14 @@ import { GenerateJwtToken } from './dto/generate-jwt-token.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from '../common/interfaces/jwtPayload.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
+    private configService: ConfigService,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -25,7 +27,7 @@ export class AuthService {
     return this.jwtService.signAsync(data);
   }
 
-  async findByJwt(jwtPayload: JwtPayload): Promise<true | false> {
+  async verifyJwt(jwtPayload: JwtPayload): Promise<true | false> {
     try {
       const { email, id } = jwtPayload;
       const user = await this.prisma.user.findUnique({
@@ -38,5 +40,12 @@ export class AuthService {
     } catch {
       return false;
     }
+  }
+
+  async getPayload(token: string): Promise<JwtPayload> {
+    const payload: JwtPayload = await this.jwtService.verifyAsync(token, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+    });
+    return payload;
   }
 }
