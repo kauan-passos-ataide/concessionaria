@@ -55,21 +55,43 @@ export class UserController {
     @Body() { email, password, code }: OtpCodeDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ accessToken: string }> {
-    const token = await this.userService.verifyOtpCode({
+    const tokens = await this.userService.verifyOtpCode({
       email,
       password,
       code,
     });
-    if (!token) {
+    if (!tokens) {
       throw new UnauthorizedException();
     }
-    res.cookie('token', token, {
+    res.cookie('refresh-token', tokens.refreshToken, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       secure: process.env.NODE_ENV === 'production' ? true : false,
       sameSite: 'lax',
     });
-    return { accessToken: token };
+    return { accessToken: tokens.accessToken };
+  }
+
+  @Public()
+  @Post('generate-new-access-token')
+  async generateNewAccessToken(
+    @Req() req: Request,
+  ): Promise<{ accessToken: string }> {
+    const refreshToken = req.cookies['refresh-token'] as string;
+    if (!refreshToken) {
+      throw new UnauthorizedException();
+    }
+    const payload =
+      await this.authService.getPayloadFromRefreshToken(refreshToken);
+
+    if (!payload) {
+      throw new UnauthorizedException();
+    }
+
+    const newAccessToken =
+      await this.authService.generateJwtAccessToken(payload);
+
+    return { accessToken: newAccessToken };
   }
 
   @Public()
@@ -93,7 +115,7 @@ export class UserController {
     if (!token) {
       throw new UnauthorizedException();
     }
-    const payload = await this.authService.getPayload(token);
+    const payload = await this.authService.getPayloadFromAccessToken(token);
     if (!payload) {
       throw new UnauthorizedException();
     }

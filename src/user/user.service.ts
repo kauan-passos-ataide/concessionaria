@@ -10,6 +10,7 @@ import { OtpCodeDto } from './dto/otpCode.dto';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { AuthService } from '../auth/auth.service';
+import { AccessTokenAndRefreshTokenDto } from './dto/accessTokenAndRefreshToken.dto';
 
 @Injectable()
 export class UserService {
@@ -34,7 +35,7 @@ export class UserService {
     code,
     email,
     password,
-  }: OtpCodeDto): Promise<string | false> {
+  }: OtpCodeDto): Promise<AccessTokenAndRefreshTokenDto | false> {
     try {
       const user = await this.verifyEmailAndComparePassword({
         email,
@@ -50,12 +51,17 @@ export class UserService {
       if (!isValid) {
         return false;
       }
-      const token = await this.authService.generateJwtToken({
+      const accessToken = await this.authService.generateJwtAccessToken({
         id: user.id,
         email: user.email,
         role: user.role,
       });
-      return token;
+      const refreshToken = await this.authService.generateJwtRefreshToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      });
+      return { accessToken, refreshToken };
     } catch {
       return false;
     }
@@ -182,7 +188,7 @@ export class UserService {
         where: { id },
         data: { role: 'SELLER' },
       });
-      const newAccessToken = await this.authService.generateJwtToken({
+      const newAccessToken = await this.authService.generateJwtAccessToken({
         id: updateUser.id,
         email: updateUser.email,
         role: updateUser.role,

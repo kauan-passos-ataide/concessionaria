@@ -23,28 +23,38 @@ export class AuthService {
     return bcrypt.compare(password, hash);
   }
 
-  async generateJwtToken(data: GenerateJwtToken): Promise<string> {
-    return this.jwtService.signAsync(data);
+  async generateJwtAccessToken(data: GenerateJwtToken): Promise<string> {
+    return this.jwtService.signAsync(data, {
+      secret: this.configService.get<string>(
+        'JWT_SECRET_ACCESS_TOKEN',
+      ) as string,
+      expiresIn: '15 min',
+    });
   }
 
-  async verifyJwt(jwtPayload: JwtPayload): Promise<true | false> {
-    try {
-      const { email, id } = jwtPayload;
-      const user = await this.prisma.user.findUnique({
-        where: { email },
-      });
-      if (user?.id === id) {
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
+  async generateJwtRefreshToken(data: GenerateJwtToken): Promise<string> {
+    return this.jwtService.signAsync(data, {
+      secret: this.configService.get<string>(
+        'JWT_SECRET_REFRESH_TOKEN',
+      ) as string,
+      expiresIn: '7d',
+    });
   }
 
-  async getPayload(token: string): Promise<JwtPayload> {
+  async getPayloadFromAccessToken(token: string): Promise<JwtPayload> {
     const payload: JwtPayload = await this.jwtService.verifyAsync(token, {
-      secret: this.configService.get<string>('JWT_SECRET'),
+      secret: this.configService.get<string>(
+        'JWT_SECRET_ACCESS_TOKEN',
+      ) as string,
+    });
+    return payload;
+  }
+
+  async getPayloadFromRefreshToken(token: string): Promise<JwtPayload> {
+    const payload: JwtPayload = await this.jwtService.verifyAsync(token, {
+      secret: this.configService.get<string>(
+        'JWT_SECRET_REFRESH_TOKEN',
+      ) as string,
     });
     return payload;
   }

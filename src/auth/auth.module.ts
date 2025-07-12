@@ -5,18 +5,9 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './jwt.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { RolesGuard } from './roles.guard';
-import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '7d' },
-      }),
-    }),
-  ],
+  imports: [JwtModule],
   providers: [
     AuthService,
     PrismaService,

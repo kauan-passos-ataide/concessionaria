@@ -32,20 +32,30 @@ export class JwtGuard implements CanActivate {
     }
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request);
-    if (!token) {
+    const refreshToken = request.cookies['refresh-token'] as string;
+    if (!token || !refreshToken) {
       throw new UnauthorizedException();
     }
     try {
-      const payload: JwtPayload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
-      if (payload.email && payload.id && payload.role) {
-        const verifyJwt = await this.authService.verifyJwt(payload);
-        if (!verifyJwt) {
-          return false;
-        }
+      const payloadAccessToken: JwtPayload = await this.jwtService.verifyAsync(
+        token,
+        {
+          secret: this.configService.get<string>(
+            'JWT_SECRET_ACCESS_TOKEN',
+          ) as string,
+        },
+      );
+      const payloadRefreshToken: JwtPayload = await this.jwtService.verifyAsync(
+        refreshToken,
+        {
+          secret: this.configService.get<string>(
+            'JWT_SECRET_REFRESH_TOKEN',
+          ) as string,
+        },
+      );
+      if (payloadAccessToken.id === payloadRefreshToken.id) {
         const request = context.switchToHttp().getRequest<RequestWithUser>();
-        request.user = payload;
+        request.user = payloadAccessToken;
         return true;
       }
       return false;
