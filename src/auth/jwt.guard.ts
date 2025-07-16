@@ -31,14 +31,14 @@ export class JwtGuard implements CanActivate {
       return true;
     }
     const request = context.switchToHttp().getRequest<Request>();
-    const token = this.extractTokenFromHeader(request);
-    const refreshToken = request.cookies['refresh-token'] as string;
-    if (!token || !refreshToken) {
-      throw new UnauthorizedException();
-    }
     try {
+      const accessToken = request.cookies['cu_jwt'] as string;
+      const refreshToken = request.cookies['cu_refresh'] as string;
+      if (!accessToken || !refreshToken) {
+        throw new UnauthorizedException();
+      }
       const payloadAccessToken: JwtPayload = await this.jwtService.verifyAsync(
-        token,
+        accessToken,
         {
           secret: this.configService.get<string>(
             'JWT_SECRET_ACCESS_TOKEN',
@@ -64,8 +64,8 @@ export class JwtGuard implements CanActivate {
     }
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
-  }
+  // private extractTokenFromHeader(request: Request): string | undefined {
+  //   const [type, token] = request.headers.authorization?.split(' ') ?? [];
+  //   return type === 'Bearer' ? token : undefined;
+  // }
 }

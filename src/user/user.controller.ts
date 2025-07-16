@@ -54,7 +54,7 @@ export class UserController {
   async verifyOtpCode(
     @Body() { email, password, code }: OtpCodeDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<{ success: true }> {
     const tokens = await this.userService.verifyOtpCode({
       email,
       password,
@@ -63,21 +63,29 @@ export class UserController {
     if (!tokens) {
       throw new UnauthorizedException();
     }
-    res.cookie('refresh-token', tokens.refreshToken, {
+    res.cookie('cu_refresh', tokens.refreshToken, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       secure: process.env.NODE_ENV === 'production' ? true : false,
       sameSite: 'lax',
     });
-    return { accessToken: tokens.accessToken };
+
+    res.cookie('cu_jwt', tokens.accessToken, {
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'lax',
+    });
+    return { success: true };
   }
 
   @Public()
-  @Post('generate-new-access-token')
+  @Post('refresh')
   async generateNewAccessToken(
     @Req() req: Request,
-  ): Promise<{ accessToken: string }> {
-    const refreshToken = req.cookies['refresh-token'] as string;
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ success: true }> {
+    const refreshToken = req.cookies['cu_refresh'] as string;
     if (!refreshToken) {
       throw new UnauthorizedException();
     }
@@ -88,10 +96,19 @@ export class UserController {
       throw new UnauthorizedException();
     }
 
-    const newAccessToken =
-      await this.authService.generateJwtAccessToken(payload);
+    const newAccessToken = await this.authService.generateJwtAccessToken({
+      email: payload.email,
+      id: payload.id,
+      role: payload.role,
+    });
 
-    return { accessToken: newAccessToken };
+    res.cookie('cu_jwt', newAccessToken, {
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'lax',
+    });
+    return { success: true };
   }
 
   @Public()
@@ -108,32 +125,30 @@ export class UserController {
     return { srcQrCode };
   }
 
-  @Public() //alterar
   @Get('verify-role')
-  async verifyRole(@Req() req: Request) {
-    const token = req.cookies['token'] as string;
-    if (!token) {
-      throw new UnauthorizedException();
-    }
-    const payload = await this.authService.getPayloadFromAccessToken(token);
-    if (!payload) {
-      throw new UnauthorizedException();
-    }
-    const user = await this.userService.findById(payload.id);
+  async verifyRole(@Req() req: RequestWithUser) {
+    const user = await this.userService.findById(req.user.id);
     if (!user) {
       throw new UnauthorizedException();
     }
     return { role: user.role };
   }
 
-  @Public() //alterar
+  @Public()
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    res.cookie('token', '', {
+    res.cookie('cu_jwt', '', {
       httpOnly: true,
       maxAge: 0,
       secure: process.env.NODE_ENV === 'production' ? true : false,
-      sameSite: 'strict',
+      sameSite: 'lax',
+      path: '/',
+    });
+    res.cookie('cu_refresh', '', {
+      httpOnly: true,
+      maxAge: 0,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'lax',
       path: '/',
     });
   }
@@ -212,7 +227,7 @@ export class UserController {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       secure: process.env.NODE_ENV === 'production' ? true : false,
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
     return { newAccessToken: tokenNewRole };
   }
