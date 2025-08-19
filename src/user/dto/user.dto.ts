@@ -2,6 +2,7 @@ import { $Enums } from '@prisma/client';
 import { Exclude, Transform } from 'class-transformer';
 import { UserEntity } from '../entity/user.entity';
 import {
+  IsArray,
   IsEmail,
   IsNotEmpty,
   IsOptional,
@@ -21,6 +22,9 @@ export class UserDto implements UserEntity {
   @IsString()
   @Transform(({ value }: { value: string | undefined }) => value ?? null)
   secret_otp: string | null;
+
+  @IsArray()
+  descriptor_face: number[];
 
   @IsNotEmpty()
   @IsString()
