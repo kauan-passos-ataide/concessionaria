@@ -87,6 +87,7 @@ export class CarController {
     if (!cars) {
       throw new InternalServerErrorException();
     }
+    // this is just a test
     return cars.map((car) => new CarDto(car));
   }
 }
