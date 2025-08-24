@@ -1,18 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCarDto } from './dto/createCar.dto';
 import { CarEntity } from './entity/car.entity';
 import { FilterCarDto } from './dto/filterCar.dto';
 import { Prisma } from '@prisma/client';
+import { UserService } from '../user/user.service';
+import { CarWithoutSellerIdDto } from './dto/carWithoutSellerId.dto.ts';
 
 @Injectable()
 export class CarService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly userService: UserService,
+  ) {}
 
   async createCar(
     sellerId: string,
     createCarDto: CreateCarDto,
-  ): Promise<CarEntity | null> {
+  ): Promise<CarWithoutSellerIdDto> {
+    const user = await this.userService.findById(sellerId);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
     try {
       const car = await this.prisma.car.create({
         data: {
@@ -22,15 +36,16 @@ export class CarService {
           model: createCarDto.model,
           name: createCarDto.name,
           year: createCarDto.year,
-          price: createCarDto.price.toFixed(2),
+          price: createCarDto.price,
         },
+        omit: { seller_id: true },
       });
-      if (!car) {
-        return null;
+      return new CarWithoutSellerIdDto(car); //fix the decimal value that prisma return
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
       }
-      return car;
-    } catch {
-      return null;
+      throw new BadRequestException(error);
     }
   }
 

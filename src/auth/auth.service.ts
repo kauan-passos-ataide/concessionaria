@@ -4,7 +4,7 @@ import { HashPassword } from './dto/hashPassword.dto';
 import { GenerateJwtToken } from './dto/generate-jwt-token.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from '../common/interfaces/jwtPayload.interface';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()

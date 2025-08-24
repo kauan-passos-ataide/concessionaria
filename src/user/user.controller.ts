@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -25,7 +24,6 @@ import { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import { OtpCodeDto } from './dto/otpCode.dto';
 import { AuthService } from '../auth/auth.service';
-import { FaceApiDto } from './dto/faceApi.dto';
 
 dotenv.config();
 
